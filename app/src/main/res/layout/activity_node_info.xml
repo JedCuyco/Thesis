@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".NodeInfo">
+
+    <TextView
+        android:id="@+id/gatewayNode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="29dp"
+        android:drawableLeft="@drawable/gateway"
+        android:text="TextView"
+        app:layout_constraintBottom_toTopOf="@+id/signalStrength"
+        app:layout_constraintTop_toBottomOf="@+id/batteryPercentage"
+        tools:layout_editor_absoluteX="16dp" />
+
+    <TextView
+        android:id="@+id/user_ID"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="39dp"
+        android:layout_marginBottom="19dp"
+        android:drawableLeft="@drawable/uid"
+        android:text="TextView"
+        app:layout_constraintBottom_toTopOf="@+id/batteryPercentage"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="spread_inside"
+        tools:layout_editor_absoluteX="16dp" />
+
+    <TextView
+        android:id="@+id/signalStrength"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="280dp"
+        android:drawableLeft="@drawable/signal"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/gatewayNode"
+        tools:layout_editor_absoluteX="16dp"/>
+
+    <TextView
+        android:id="@+id/batteryPercentage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:drawableLeft="@drawable/batt"
+        android:text="TextView"
+        app:layout_constraintBottom_toTopOf="@+id/gatewayNode"
+        app:layout_constraintTop_toBottomOf="@+id/user_ID"
+        tools:layout_editor_absoluteX="16dp" />
+</android.support.constraint.ConstraintLayout>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <item
+        android:id="@+id/action_nodeInfo"
+        android:icon="@drawable/node_info"
+        android:title="Node Info"
+        app:showAsAction="never"/>
+
+
+    <item android:id="@+id/action_settings"
+        android:title="Share Node Info"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/disconnect"
+        android:title="Disconnect"
+        app:showAsAction="never"/>
+
+
+    <item android:id="@+id/discover"
+        android:title="Discover"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/routingTable"
+        android:title="View Routing Table"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/viewMessages"
+        android:title="View Messages"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/simulate"
+        android:title="Simulate Hop"
+        app:showAsAction="never"/>
+
+
+</menu>
