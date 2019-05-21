@@ -15,36 +15,42 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String TAG = "DatabaseHelper";
 
-    private static final String TABLE_NAME = "people_table";
-    private static final String COL1 = "ID";
-    private static final String COL2 = "name";
+    public static final String DB_Name= "neighbor.db";
+    public static final String table_name= "routing_table";
+    public static final String col1= "mac_address";
+    public static final String col2= "next_hop";
+    public static final String col3= "hop_count";
+    public static final String col4= "status";
 
 
     public DatabaseHelper(Context context) {
-        super(context, TABLE_NAME, null, 1);
+        super(context, table_name, null, 1);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String createTable = "CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                COL2 +" TEXT)";
-        db.execSQL(createTable);
+        db.execSQL("CREATE TABLE "+ table_name+ "(mac_address text primary key, next_hop text, hop_count integer, status boolean)");
+        //String createTable = "CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +COL2 +" TEXT)";
+        //db.execSQL(createTable);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int i, int i1) {
-        db.execSQL("DROP IF TABLE EXISTS " + TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS "+ table_name);
         onCreate(db);
     }
 
-    public boolean addData(String item) {
+    public boolean addData(String mac_address, String next_hop, int hop_count, boolean status) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
-        contentValues.put(COL2, item);
+        contentValues.put(col1, mac_address);
+        contentValues.put(col2, next_hop);
+        contentValues.put(col3, hop_count);
+        contentValues.put(col4, status);
 
-        Log.d(TAG, "addData: Adding " + item + " to " + TABLE_NAME);
+        //Log.d(TAG, "addData: Adding " + item + " to " + TABLE_NAME);
 
-        long result = db.insert(TABLE_NAME, null, contentValues);
+        long result= db.insert(table_name, null, contentValues);
 
         //if date as inserted incorrectly it will return -1
         if (result == -1) {
@@ -60,7 +66,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      */
     public Cursor getData(){
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_NAME;
+        String query = "SELECT * FROM " + table_name;
         Cursor data = db.rawQuery(query, null);
         return data;
     }
@@ -70,13 +76,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @param name
      * @return
      */
-    public Cursor getItemID(String name){
+   /* public Cursor getItemID(String name){
         SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT " + COL1 + " FROM " + TABLE_NAME +
                 " WHERE " + COL2 + " = '" + name + "'";
         Cursor data = db.rawQuery(query, null);
         return data;
-    }
+    }*/
 
     /**
      * Updates the name field
@@ -84,7 +90,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @param id
      * @param oldName
      */
-    public void updateName(String newName, int id, String oldName){
+   /* public void updateName(String newName, int id, String oldName){
         SQLiteDatabase db = this.getWritableDatabase();
         String query = "UPDATE " + TABLE_NAME + " SET " + COL2 +
                 " = '" + newName + "' WHERE " + COL1 + " = '" + id + "'" +
@@ -92,14 +98,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Log.d(TAG, "updateName: query: " + query);
         Log.d(TAG, "updateName: Setting name to " + newName);
         db.execSQL(query);
-    }
+    }*/
 
     /**
      * Delete from database
      * @param id
      * @param name
      */
-    public void deleteName(int id, String name){
+    /*public void deleteName(int id, String name){
         SQLiteDatabase db = this.getWritableDatabase();
         String query = "DELETE FROM " + TABLE_NAME + " WHERE "
                 + COL1 + " = '" + id + "'" +
@@ -107,6 +113,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Log.d(TAG, "deleteName: query: " + query);
         Log.d(TAG, "deleteName: Deleting " + name + " from database.");
         db.execSQL(query);
-    }
+    }*/
 
 }

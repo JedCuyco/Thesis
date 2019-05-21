@@ -18,7 +18,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".viewMessages"></activity>
+        <activity android:name=".viewMessages" />
         <activity android:name=".NodeInfo" />
         <activity android:name=".Transmission" />
         <activity android:name=".Dashboard" />
@@ -36,7 +36,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".ConversationActivity" />
         <activity android:name="com.codinguser.android.contactpicker.ContactsPickerActivity" />
     </application>
 
