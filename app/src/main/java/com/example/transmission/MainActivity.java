@@ -436,10 +436,9 @@ public class MainActivity extends AppCompatActivity {
 
                 for(WifiP2pDevice device: peerList.getDeviceList())
                 {
-                    if(!entries.containsKey(device.deviceAddress))
+                    if(mDatabaseHelper.CheckData(device.deviceAddress)==false)
                     {
-                        RouteEntry entry= new RouteEntry(device.deviceName, device.deviceAddress, 1, 0, 0 );
-                        entries.put(device.deviceAddress, entry);
+                        mDatabaseHelper.addData(device.deviceAddress, device.deviceAddress, 1, false);
                     }
                     deviceNameArray[index]=device.deviceName;
                     deviceArray[index]=device;
@@ -662,18 +661,21 @@ public class MainActivity extends AppCompatActivity {
                 discoverPeers();
                 return true;
             case R.id.routingTable:
-                Iterator it = entries.entrySet().iterator();
+                Intent vrt=new Intent(this, viewRoutingTable.class);
+                startActivity(vrt);
+                return true;
+                /*Iterator it = entries.entrySet().iterator();
                 int entrysize= entries.size();
                 String shared= entrysize+"";
                 while (it.hasNext()) {
                     Map.Entry pair = (Map.Entry)it.next();
                     RouteEntry entree= entries.get(pair.getKey());
                     shared+="="+pair.getKey()+";"+entree.getNextHopMacAddress()+";"+entree.getHopCount()+";"+entree.getPhoneSignal()+";"+entree.getBatteryPercenteage()+";"+entree.getDestinationMac();
-                    /*System.out.println(pair.getKey() + " = " + entree.getNextHopMacAddress());*/
+                    *//*System.out.println(pair.getKey() + " = " + entree.getNextHopMacAddress());*//*
                     System.out.println(shared);
                     it.remove(); // avoids a ConcurrentModificationException
                 }
-                return true;
+                return true;*/
             case R.id.viewMessages:
                 Intent vma= new Intent(this, viewMessages.class);
                 vma.putStringArrayListExtra("inboxMessages", readMessagesArray);
