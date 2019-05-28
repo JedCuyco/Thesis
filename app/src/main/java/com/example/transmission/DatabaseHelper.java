@@ -24,7 +24,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 
     public DatabaseHelper(Context context) {
-        super(context, table_name, null, 1);
+        super(context, DB_Name, null, 1);
     }
 
     @Override
@@ -93,22 +93,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @param id
      * @param name
      */
-    /*public void deleteName(int id, String name){
+    public void deleteName(String fieldValue){
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "DELETE FROM " + TABLE_NAME + " WHERE "
-                + COL1 + " = '" + id + "'" +
-                " AND " + COL2 + " = '" + name + "'";
-        Log.d(TAG, "deleteName: query: " + query);
-        Log.d(TAG, "deleteName: Deleting " + name + " from database.");
+        String query = "DELETE FROM routing_table where mac_address='"+ fieldValue+";";
+        //Log.d(TAG, "deleteName: query: " + query);
+        //Log.d(TAG, "deleteName: Deleting " + name + " from database.");
         db.execSQL(query);
-    }*/
+    }
 
     public Cursor dataExists(String fieldValue)
     {
-        SQLiteDatabase db= this.getWritableDatabase();
-        String Query= "Select * from routing_table where mac_address = " + fieldValue;
-        Cursor res = db.rawQuery(Query, null);
 
+        SQLiteDatabase db= this.getWritableDatabase();
+        String Query= "Select * from routing_table where mac_address ='" + fieldValue+ "'";
+        Cursor res = db.rawQuery(Query, null);
         return res;
     }
 
@@ -119,7 +117,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         {
             return false;
         }
-        else return true;
+        else
+            return true;
+        //return false;
     }
 
 }

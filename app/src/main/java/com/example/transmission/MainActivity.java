@@ -438,9 +438,10 @@ public class MainActivity extends AppCompatActivity {
                 {
                     if(mDatabaseHelper.CheckData(device.deviceAddress)==false)
                     {
+                        System.out.println("DB HELLO");
                         mDatabaseHelper.addData(device.deviceAddress, device.deviceAddress, 1, false);
                     }
-                    deviceNameArray[index]=device.deviceName;
+                    deviceNameArray[index]=device.deviceAddress;
                     deviceArray[index]=device;
                     index++;
                 }
