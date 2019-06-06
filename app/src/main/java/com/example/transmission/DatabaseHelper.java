@@ -21,6 +21,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String col2= "next_hop";
     public static final String col3= "hop_count";
     public static final String col4= "status";
+    public static final String col5="device_name";
+    public static final String col6="battery_percentage";
+    public static final String col7="signal";
 
 
     public DatabaseHelper(Context context) {
@@ -29,7 +32,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE "+ table_name+ "(mac_address text primary key, next_hop text, hop_count integer, status boolean)");
+        db.execSQL("CREATE TABLE "+ table_name+ "(mac_address text primary key, next_hop text, hop_count integer, status boolean, device_name, battery_percentage, signal)");
         //String createTable = "CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +COL2 +" TEXT)";
         //db.execSQL(createTable);
     }
@@ -40,13 +43,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public boolean addData(String mac_address, String next_hop, int hop_count, boolean status) {
+    public boolean addData(String mac_address, String next_hop, int hop_count, boolean status, String device_name, int battery_percentage, int signal) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(col1, mac_address);
         contentValues.put(col2, next_hop);
         contentValues.put(col3, hop_count);
         contentValues.put(col4, status);
+        contentValues.put(col5, device_name);
+        contentValues.put(col6, battery_percentage);
+        contentValues.put(col7, signal);
 
         //Log.d(TAG, "addData: Adding " + item + " to " + TABLE_NAME);
 
@@ -95,7 +101,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      */
     public void deleteName(String fieldValue){
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "DELETE FROM routing_table where mac_address='"+ fieldValue+";";
+        String query = "DELETE FROM routing_table where mac_address='"+ fieldValue+"'";
         //Log.d(TAG, "deleteName: query: " + query);
         //Log.d(TAG, "deleteName: Deleting " + name + " from database.");
         db.execSQL(query);
