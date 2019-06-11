@@ -35,5 +35,13 @@
         android:title="Simulate Hop"
         app:showAsAction="never"/>
 
+    <item android:id="@+id/test"
+        android:title="Test"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/rreq"
+        android:title="Send RREQ"
+        app:showAsAction="never"/>
+
 
 </menu>

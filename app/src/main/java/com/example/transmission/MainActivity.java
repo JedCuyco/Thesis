@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -75,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
     IntentFilter nodeFilter;
 
     List<WifiP2pDevice> peers= new ArrayList<WifiP2pDevice>();
-    String[] deviceNameArray;
+    ArrayList<String> deviceNameArray= new ArrayList<>();
     WifiP2pDevice[] deviceArray;
     ArrayList<String>  inboxArray= new ArrayList<String>();
     ArrayList<String>  readMessagesArray= new ArrayList<String>();
@@ -158,8 +159,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkPacketType(final String [] packet, final String tempPacket)
     {
-        String test= packet[2];
+        //String test= packet[2];
         int index=0;
+        //System.out.println(packet[3]+ "pa");
 
         if(packet[0].equals("0"))
         {
@@ -181,10 +183,8 @@ public class MainActivity extends AppCompatActivity {
             }
             else
             {
-
                 if(entries.containsKey(packet[2]))
                 {
-
                     final String nextHop= entries.get(packet[2]).getNextHopMacAddress();
                     disconnect();
 
@@ -209,8 +209,7 @@ public class MainActivity extends AppCompatActivity {
                                     index=j;
                                 }
                             }
-                            connect(index);
-                            //list.performItemClick(list, index, list.getItemIdAtPosition(index));
+                            connect(deviceNameArray.get(index));
 
                         }
                     }, 20000);
@@ -238,6 +237,46 @@ public class MainActivity extends AppCompatActivity {
                 String phonenum= conversationClass.reformatNumber(packet[3]);
                 conversationClass.sendSMS(phonenum, packet[4]);
             }
+        }
+        else if(packet[0].equals("2"))
+        {
+            System.out.println(packet[3]);
+            String [] entries= packet[3].split("\\\\n");
+            int no_entries= entries.length;
+            for(int i=0; i<no_entries; i++)
+            {
+                String [] entry= entries[i].split("\\|");
+                if(mDatabaseHelper.CheckData(entry[0]))
+                {
+                    if(mDatabaseHelper.getHopCount(entry[0])>Integer.parseInt(entry[2])+1)
+                    {
+                        mDatabaseHelper.updateHopCount(entry[0],Integer.parseInt(entry[2]+1));
+                        mDatabaseHelper.updateNextHop(entry[0], entry[1]);
+                    }
+
+                }
+                else
+                {
+                    //add()
+                    mDatabaseHelper.addData(entry[0], entry[1],Integer.parseInt(entry[2])+1, false, Build.MODEL, 0, 0);
+                }
+
+            }
+        }
+        else if(packet[0].equals("3"))
+        {
+            Cursor res= mDatabaseHelper.getData();
+            StringBuffer buffer= new StringBuffer();
+            while(res.moveToNext())
+            {
+                buffer.append(res.getString(0)+"|");
+                buffer.append(getWFDMacAddress().toLowerCase()+"|");
+                buffer.append(res.getInt(2)+"|");
+                buffer.append(res.getString(3)+"\n");
+            }
+            String msg1="2;"+getWFDMacAddress().toLowerCase()+";"+res.getCount()+";"+buffer.toString();
+            System.out.println(buffer.toString());
+            sendReceive.write(msg1.getBytes());
         }
         else if(packet[0].equals("4"))
         {
@@ -289,8 +328,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent= new Intent(view.getContext(), Transmission.class);
-                intent.putExtra("contact_name", deviceNameArray[position]);
-                intent.putExtra("destination_number", deviceArray[position].deviceAddress);
+                Cursor res= mDatabaseHelper.dataExists(list.getItemAtPosition(position).toString());
+                res.moveToNext();
+                intent.putExtra("contact_name", list.getItemAtPosition(position).toString());
+                intent.putExtra("destination_number", res.getString(1));
                 intent.putExtra("isInternal", true);
                 intent.putExtra("position", position);
                 startActivity(intent);
@@ -300,16 +341,18 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void connect(int position)
+    private void connect(String position)
     {
-        final WifiP2pDevice device= deviceArray[position];
-        config.deviceAddress= device.deviceAddress;
+        //final WifiP2pDevice device= deviceArray[position];
+        final Cursor res= mDatabaseHelper.dataExists(position);
+        res.moveToFirst();
+        config.deviceAddress= res.getString(1);
         config.groupOwnerIntent=0;
         //status.setText(device.deviceAddress);
         nodeManager.connect(nodeChannel, config, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                Toast.makeText(getApplicationContext(), "Connected to "+ device.deviceAddress, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Connected to "+ res.getString(1), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -430,7 +473,7 @@ public class MainActivity extends AppCompatActivity {
             {
                 peers.clear();
                 peers.addAll(peerList.getDeviceList());
-                deviceNameArray= new String[peerList.getDeviceList().size()];
+                //deviceNameArray= new String[peerList.getDeviceList().size()];
                 deviceArray= new WifiP2pDevice[peerList.getDeviceList().size()];
                 int index=0;
 
@@ -440,9 +483,19 @@ public class MainActivity extends AppCompatActivity {
                     {
                         mDatabaseHelper.addData(device.deviceAddress, device.deviceAddress, 1, false, device.deviceName, 0, 0);
                     }
-                    deviceNameArray[index]=device.deviceAddress;
+                    if(!deviceNameArray.contains(device.deviceAddress))
+                    {
+                        deviceNameArray.add(device.deviceAddress);
+                    }
                     deviceArray[index]=device;
                     index++;
+                }
+                Cursor res= mDatabaseHelper.getData();
+
+                while (res.moveToNext())
+                {
+                    if(!deviceNameArray.contains(res.getString(0)))
+                        deviceNameArray.add(res.getString(0));
                 }
 
                 ArrayAdapter<String> adapter= new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
@@ -684,6 +737,27 @@ public class MainActivity extends AppCompatActivity {
             case R.id.simulate:
                 String msg="0;"+getWFDMacAddress().toLowerCase()+";"+"06:d6:aa:48:95:76"+";"+"this is a simulation"+";"+ Build.MODEL;
                 sendReceive.write(msg.getBytes());
+            case R.id.test:
+                Cursor res= mDatabaseHelper.getData();
+                StringBuffer buffer= new StringBuffer();
+                String[] testsample;
+                while(res.moveToNext())
+                {
+                    buffer.append(res.getString(0)+":");
+                    buffer.append(res.getString(1)+":");
+                    buffer.append(res.getInt(2)+":");
+                    buffer.append(res.getString(3)+"\n");
+                }
+                String msg1="2;"+getWFDMacAddress().toLowerCase()+";"+res.getCount()+";"+buffer.toString();
+                System.out.println(msg1);
+                testsample=msg1.split(";");
+                System.out.println(testsample[3]);
+                String []test1;
+                test1=testsample[3].split("////n");
+                System.out.println(test1[0]);
+            case R.id.rreq:
+                String route_req="3;"+getWFDMacAddress().toLowerCase();
+                sendReceive.write(route_req.getBytes());
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.

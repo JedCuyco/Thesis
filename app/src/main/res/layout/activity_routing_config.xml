@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorAccent"
+    tools:context=".routingConfig">
+
+    <EditText
+        android:id="@+id/input_address"
+        android:textColor="@color/textColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="33dp"
+        android:layout_marginBottom="34dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="Neighbor Address"
+        app:layout_constraintBottom_toTopOf="@+id/input_deviceName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/input_deviceName"
+        android:textColor="@color/textColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="36dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="Davice Name"
+        app:layout_constraintBottom_toTopOf="@+id/spinner_nh"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/input_address" />
+
+
+    <EditText
+        android:id="@+id/input_count"
+        android:textColor="@color/textColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="38dp"
+        android:ems="10"
+        android:inputType="number"
+        android:text="Hop Count"
+        app:layout_constraintBottom_toTopOf="@+id/spinner_status"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/spinner_nh" />
+
+
+    <EditText
+        android:id="@+id/input_battery"
+        android:textColor="@color/textColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="35dp"
+        android:ems="10"
+        android:inputType="number"
+        android:text="Battery Percentage"
+        app:layout_constraintBottom_toTopOf="@+id/input_signal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/spinner_status" />
+
+    <EditText
+        android:id="@+id/input_signal"
+        android:textColor="@color/textColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="170dp"
+        android:ems="10"
+        android:inputType="number"
+        android:text="Signal Strength"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/input_battery" />
+
+    <Button
+        android:id="@+id/btn_add"
+        android:textColor="@color/colorPrimary"
+        android:background="@color/colorPrimaryDark"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="48dp"
+        android:layout_marginEnd="46dp"
+        android:layout_marginBottom="32dp"
+        android:text="Add"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/input_signal" />
+
+    <Spinner
+        android:id="@+id/spinner_nh"
+        android:layout_width="215dp"
+        android:layout_height="47dp"
+        android:layout_marginBottom="35dp"
+        app:layout_constraintBottom_toTopOf="@+id/input_count"
+        app:layout_constraintEnd_toEndOf="@+id/input_count"
+        app:layout_constraintStart_toStartOf="@+id/input_count"
+        app:layout_constraintTop_toBottomOf="@+id/input_deviceName"
+        android:textColor="@color/textColor"/>
+
+    <Spinner
+        android:id="@+id/spinner_status"
+        android:layout_width="216dp"
+        android:layout_height="47dp"
+        android:layout_marginBottom="37dp"
+        app:layout_constraintBottom_toTopOf="@+id/input_battery"
+        app:layout_constraintEnd_toEndOf="@+id/input_battery"
+        app:layout_constraintStart_toStartOf="@+id/input_battery"
+        app:layout_constraintTop_toBottomOf="@+id/input_count"
+        android:textColor="@color/textColor"/>
+
+
+</android.support.constraint.ConstraintLayout>

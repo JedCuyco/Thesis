@@ -25,6 +25,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String col6="battery_percentage";
     public static final String col7="signal";
 
+    public static final String table_name2="message_history";
+    public static final String cl1="message_id";
+    public static final String cl2="mac_addressf";
+    public static final String cl3="message";
 
     public DatabaseHelper(Context context) {
         super(context, DB_Name, null, 1);
@@ -32,7 +36,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE "+ table_name+ "(mac_address text primary key, next_hop text, hop_count integer, status boolean, device_name, battery_percentage, signal)");
+        db.execSQL("CREATE TABLE "+ table_name+ "(mac_address text primary key, next_hop text, hop_count integer, status boolean, device_name text, battery_percentage int, signal int)");
+        db.execSQL("CREATE TABLE "+ table_name2+ "(message_id int primary key autoincrement, mac_addressf text, message text, foreign key (mac_addressf) references "+table_name+"("+col1+"))");
         //String createTable = "CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +COL2 +" TEXT)";
         //db.execSQL(createTable);
     }
@@ -40,6 +45,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int i, int i1) {
         db.execSQL("DROP TABLE IF EXISTS "+ table_name);
+        db.execSQL("DROP TABLE IF EXISTS "+ table_name2);
         onCreate(db);
     }
 
@@ -55,7 +61,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(col7, signal);
 
         //Log.d(TAG, "addData: Adding " + item + " to " + TABLE_NAME);
-
         long result= db.insert(table_name, null, contentValues);
 
         //if date as inserted incorrectly it will return -1
@@ -116,6 +121,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return res;
     }
 
+
     public  boolean CheckData(String fieldValue)
     {
         Cursor res= dataExists(fieldValue);
@@ -126,6 +132,36 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         else
             return true;
         //return false;
+    }
+
+    public int getHopCount(String fieldValue)
+    {
+        Cursor res= dataExists(fieldValue);
+        res.moveToNext();
+
+        return res.getInt(2);
+    }
+
+    public String getNextHop(String fieldValue)
+    {
+        Cursor res= dataExists(fieldValue);
+        res.moveToNext();
+
+        return res.getString(1);
+    }
+
+    public void updateHopCount(String fieldValue, int hopcount)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String query = "update routing_table set hop_count='"+hopcount+"' where mac_address='"+fieldValue+"'";
+        db.execSQL(query);
+    }
+
+    public void updateNextHop(String fieldValue, String newNextHop)
+    {
+        SQLiteDatabase db= this.getWritableDatabase();
+        String query= "update routing_table set next_hop='"+newNextHop+"' where mac_adress='"+fieldValue+"'";
+        db.execSQL(query);
     }
 
 }

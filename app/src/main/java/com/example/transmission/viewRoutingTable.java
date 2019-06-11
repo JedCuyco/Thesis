@@ -1,7 +1,9 @@
 package com.example.transmission;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,6 +14,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.codinguser.android.contactpicker.ContactsPickerActivity;
+
 import java.util.ArrayList;
 
 public class viewRoutingTable extends AppCompatActivity {
@@ -20,6 +24,7 @@ public class viewRoutingTable extends AppCompatActivity {
     ArrayList<String> routeInfo= new ArrayList<>();
     ListView routeTable;
     ArrayAdapter<String> adapter;
+    FloatingActionButton fab;
 
 
     @Override
@@ -28,6 +33,7 @@ public class viewRoutingTable extends AppCompatActivity {
         setContentView(R.layout.activity_view_routing_table);
         routeTable= (ListView)findViewById(R.id.routing_table);
         mDatabaseHelper=new DatabaseHelper(this);
+        fab= findViewById(R.id.fab_route);
         actionListener();
         viewAllEntries();
     }
@@ -35,6 +41,15 @@ public class viewRoutingTable extends AppCompatActivity {
     public void actionListener()
     {
 
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getBaseContext(), routingConfig.class);
+                intent.putExtra("isEditable", false);
+                startActivity(intent);
+
+            }
+        });
 
         routeTable.setOnItemClickListener(new AdapterView.OnItemClickListener(){
 
@@ -45,6 +60,12 @@ public class viewRoutingTable extends AppCompatActivity {
                 Cursor res= mDatabaseHelper.dataExists(routeTable.getItemAtPosition(position).toString());
                 res.moveToFirst();
                 final String tempAddress= res.getString(0);
+                final String tempNextHop= res.getString(1);
+                final int tempHopCount= res.getInt(2);
+                final boolean tempStatus= res.getInt(3)>0;
+                final String tempName= res.getString(4);
+                final int tempBattery= res.getInt(5);
+                final int tempSignal= res.getInt(6);
                 buildera.setNeutralButton("Delete Route", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -54,9 +75,21 @@ public class viewRoutingTable extends AppCompatActivity {
                         adapter.notifyDataSetChanged();
                     }
                 });
-                //System.out.println("position "+ position);
-
-                //System.out.println(res.getString(0)+ "this res");
+                buildera.setPositiveButton("Edit",  new DialogInterface.OnClickListener(){
+                    @Override
+                    public void onClick(DialogInterface dialog, int which){
+                        Intent rc= new Intent(getApplicationContext(), routingConfig.class);
+                        rc.putExtra("mac_address", tempAddress);
+                        rc.putExtra("next_hop", tempNextHop);
+                        rc.putExtra("hop_count",tempHopCount);
+                        rc.putExtra("status", tempStatus);
+                        rc.putExtra("device_name", tempName);
+                        rc.putExtra("battery", tempBattery);
+                        rc.putExtra("signal", tempSignal);
+                        rc.putExtra("isEditable", true);
+                        startActivity(rc);
+                    }
+                });
                 buffer.append("Neighbor: "+ res.getString(0)+"\n");
                 buffer.append("Next Hop: "+ res.getString(1)+"\n");
                 buffer.append("Hops: "+ res.getInt(2)+"\n");
@@ -72,12 +105,11 @@ public class viewRoutingTable extends AppCompatActivity {
 
     public void viewAllEntries()
     {
-        System.out.println("hello");
+
         Cursor res = mDatabaseHelper.getData();
         if(res.getCount()==0)
         {
             showRoutes("No routes.");
-            System.out.println("hello");
             return ;
         }
 
@@ -86,7 +118,6 @@ public class viewRoutingTable extends AppCompatActivity {
         StringBuffer buffer= new StringBuffer();
         while(res.moveToNext())
         {
-            System.out.println(res.getString(0));
             macAddressArr.add(res.getString(0));
             buffer.append(res.getString(0)+" : ");
             buffer.append(res.getString(1)+" : ");
@@ -97,7 +128,6 @@ public class viewRoutingTable extends AppCompatActivity {
         }
 
         showRoutes(buffer.toString());
-        System.out.println(buffer.toString());
     }
 
     public void showRoutes(String Message)

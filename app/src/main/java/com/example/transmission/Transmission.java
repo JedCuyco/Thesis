@@ -100,7 +100,6 @@ public class Transmission extends MainActivity {
                 {
                     if(mSignalStrength<0)
                     {
-                        System.out.println("Hello");
                         String phoneNum = conversationClass.reformatNumber(getIntent().getStringExtra("destination_number"));
                         conversationClass.sendSMS(phoneNum, messageInput.getText().toString());
                         inboxArray.add(messageInput.getText().toString());
@@ -119,7 +118,7 @@ public class Transmission extends MainActivity {
 
     private void connect(int position)
     {
-        System.out.println("test");
+        System.out.println("test transmission");
         //final WifiP2pDevice device= deviceArray[position];
         config.deviceAddress= nodeAddress;
         config.groupOwnerIntent=0;
