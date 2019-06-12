@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
                 case MESSAGE_READ:
                     byte[] readbuff= (byte[]) msg.obj;
                     String tempMsg= new String(readbuff, 0, msg.arg1);
-                    System.out.println(tempMsg);
+                    //System.out.println(tempMsg);
                     String[] packet=tempMsg.split(";");
                     checkPacketType(packet, tempMsg);
                     inboxArray.add(tempMsg);
@@ -183,9 +183,12 @@ public class MainActivity extends AppCompatActivity {
             }
             else
             {
-                if(entries.containsKey(packet[2]))
+
+                /*if(entries.containsKey(packet[2]))*/
+                if(mDatabaseHelper.CheckData(packet[2]))
                 {
-                    final String nextHop= entries.get(packet[2]).getNextHopMacAddress();
+                    //final String nextHop= entries.get(packet[2]).getNextHopMacAddress();
+                    final String nextHop= mDatabaseHelper.getNextHop(packet[2]);
                     disconnect();
 
                     final Handler delaydiscover = new Handler();
@@ -241,8 +244,9 @@ public class MainActivity extends AppCompatActivity {
         else if(packet[0].equals("2"))
         {
             System.out.println(packet[3]);
-            String [] entries= packet[3].split("\\\\n");
+            String [] entries= packet[3].split("~");
             int no_entries= entries.length;
+            System.out.println("len of entries is: "+ no_entries);
             for(int i=0; i<no_entries; i++)
             {
                 String [] entry= entries[i].split("\\|");
@@ -272,11 +276,12 @@ public class MainActivity extends AppCompatActivity {
                 buffer.append(res.getString(0)+"|");
                 buffer.append(getWFDMacAddress().toLowerCase()+"|");
                 buffer.append(res.getInt(2)+"|");
-                buffer.append(res.getString(3)+"\n");
+                buffer.append(res.getString(3)+"~");
             }
             String msg1="2;"+getWFDMacAddress().toLowerCase()+";"+res.getCount()+";"+buffer.toString();
             System.out.println(buffer.toString());
             sendReceive.write(msg1.getBytes());
+            disconnect();
         }
         else if(packet[0].equals("4"))
         {
@@ -352,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
         nodeManager.connect(nodeChannel, config, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                Toast.makeText(getApplicationContext(), "Connected to "+ res.getString(1), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Connecting to "+ res.getString(1), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -516,7 +521,7 @@ public class MainActivity extends AppCompatActivity {
             //status.setText(info.groupOwnerAddress.toString());
             if(info.groupFormed && info.isGroupOwner)
             {
-                Toast.makeText(getApplicationContext(), "Host", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "You can now send/receive message (Host)", Toast.LENGTH_SHORT).show();
                 serverClass= new serverClass();
                 serverClass.start();
 
@@ -535,7 +540,7 @@ public class MainActivity extends AppCompatActivity {
 
             }else if(info.groupFormed)
             {
-                Toast.makeText(getApplicationContext(), "Client", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "You can now send/receive message (Client)", Toast.LENGTH_SHORT).show();
                 clientClass= new clientClass(groupOwnerAddress);
                 clientClass.start();
             }
@@ -649,6 +654,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     public class clientClass extends Thread{
         Socket socket;
         String hostAddress;
@@ -678,6 +684,46 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
                 //Toast.makeText(getApplicationContext(), "Client", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    public void sendRREQ()
+    {
+        final Cursor res= mDatabaseHelper.getData();
+
+        while(res.moveToNext())
+        {
+            final String mac= res.getString(0);
+            final String route_req="3;"+getWFDMacAddress().toLowerCase();
+            if(deviceNameArray.contains(mac))
+            {
+
+                final Handler delaydiscover = new Handler();
+                delaydiscover.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Do something after 5s = 5000ms
+                        discoverPeers();
+                    }
+                }, 10000);
+
+                final Handler connect = new Handler();
+                connect.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        connect(mac);
+
+                    }
+                }, 20000);
+
+                final Handler relay = new Handler();
+                relay.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        sendReceive.write(route_req.getBytes());
+                    }
+                }, 60000);
             }
         }
     }
@@ -756,8 +802,9 @@ public class MainActivity extends AppCompatActivity {
                 test1=testsample[3].split("////n");
                 System.out.println(test1[0]);
             case R.id.rreq:
-                String route_req="3;"+getWFDMacAddress().toLowerCase();
-                sendReceive.write(route_req.getBytes());
+                sendRREQ();
+                /*String route_req="3;"+getWFDMacAddress().toLowerCase();
+                sendReceive.write(route_req.getBytes());*/
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
