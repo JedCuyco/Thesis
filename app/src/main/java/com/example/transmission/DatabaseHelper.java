@@ -37,7 +37,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE "+ table_name+ "(mac_address text primary key, next_hop text, hop_count integer, status boolean, device_name text, battery_percentage int, signal int)");
-        db.execSQL("CREATE TABLE "+ table_name2+ "(message_id int primary key autoincrement, mac_addressf text, message text, foreign key (mac_addressf) references "+table_name+"("+col1+"))");
+        /*db.execSQL("CREATE TABLE "+ table_name2+ "(message_id int primary key autoincrement, mac_addressf text, message text, foreign key (mac_addressf) references "+table_name+"("+col1+"))");*/
         //String createTable = "CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +COL2 +" TEXT)";
         //db.execSQL(createTable);
     }
@@ -45,7 +45,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int i, int i1) {
         db.execSQL("DROP TABLE IF EXISTS "+ table_name);
-        db.execSQL("DROP TABLE IF EXISTS "+ table_name2);
+        /*db.execSQL("DROP TABLE IF EXISTS "+ table_name2);*/
         onCreate(db);
     }
 
@@ -121,6 +121,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return res;
     }
 
+    public Cursor getDirectlyConnected()
+    {
+        int fieldValue=1;
+        SQLiteDatabase db= this.getWritableDatabase();
+        String Query= "Select * from routing_table where hop_count ='" + fieldValue+ "'";
+        Cursor res = db.rawQuery(Query, null);
+        return res;
+    }
 
     public  boolean CheckData(String fieldValue)
     {
@@ -159,10 +167,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public void updateNextHop(String fieldValue, String newNextHop)
     {
+        String TABLE_NAME= "routing_table";
+        String ColumnName= "next_hop";
+        String Column="mac_address";
         SQLiteDatabase db= this.getWritableDatabase();
-        String query= "update routing_table set next_hop='"+newNextHop+"' where mac_adress='"+fieldValue+"'";
-        db.execSQL(query);
+        /*ContentValues cv= new ContentValues();
+        cv.put("next_hop", newNextHop);*/
+        String sql = "UPDATE "+TABLE_NAME +" SET " + ColumnName+ " = '"+newNextHop+"' WHERE "+Column+ " = '"+fieldValue+"'";
+        //String query= "update routing_table set next_hop='"+newNextHop+"' where mac_adress='"+fieldValue+"'";
+        db.execSQL(sql);
+        //db.update("routing_table", cv, "mac_address= ?", new String[]{fieldValue});
     }
+
 
 
 

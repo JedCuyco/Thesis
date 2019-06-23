@@ -19,6 +19,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.NotificationCompat;
@@ -33,10 +34,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Button;
 import android.widget.Toast;
 
 import com.codinguser.android.contactpicker.ContactsPickerActivity;
@@ -55,9 +53,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+
 
 
 public class MainActivity extends AppCompatActivity {
@@ -98,10 +95,13 @@ public class MainActivity extends AppCompatActivity {
     private HashMap<String, RouteEntry> entries = new HashMap<String, RouteEntry>();
 
     boolean isBusy= false;
+    boolean gatewayAvailable= true;
 
     NotificationCompat.Builder notification;
 
     ConversationClass conversationClass;
+
+    boolean ready;
 
     private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver(){
         @Override
@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
                 case MESSAGE_READ:
                     byte[] readbuff= (byte[]) msg.obj;
                     String tempMsg= new String(readbuff, 0, msg.arg1);
-                    //System.out.println(tempMsg);
+                    System.out.println(tempMsg);
                     String[] packet=tempMsg.split(";");
                     checkPacketType(packet, tempMsg);
                     inboxArray.add(tempMsg);
@@ -180,6 +180,9 @@ public class MainActivity extends AppCompatActivity {
 
                 NotificationManager nm= (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
                 nm.notify(2580, notification.build());
+                long end= System.nanoTime();
+                System.out.println("END: "+end);
+                disconnect();
             }
             else
             {
@@ -204,15 +207,15 @@ public class MainActivity extends AppCompatActivity {
                     connect.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            int index=0;
+                           /* int index=0;
                             for (int j=0; j<deviceArray.length; j++)
                             {
                                 if(deviceArray[j].deviceAddress.equals(nextHop))
                                 {
                                     index=j;
                                 }
-                            }
-                            connect(deviceNameArray.get(index));
+                            }*/
+                            connect(nextHop);
 
                         }
                     }, 20000);
@@ -221,9 +224,10 @@ public class MainActivity extends AppCompatActivity {
                     relay.postDelayed(new Runnable() {
                         @Override
                         public void run() {
+                            System.out.println(tempPacket);
                             sendReceive.write(tempPacket.getBytes());
                         }
-                    }, 30000);
+                    }, 60000);
                 }
                 else
                 {
@@ -235,10 +239,56 @@ public class MainActivity extends AppCompatActivity {
         }
         else if(packet[0].equals("1"))
         {
+            System.out.println("Sent");
             if(packet[2].equals(getWFDMacAddress().toLowerCase())&& mSignalStrength<0)
             {
+                disconnect();
                 String phonenum= conversationClass.reformatNumber(packet[3]);
                 conversationClass.sendSMS(phonenum, packet[4]);
+
+            }
+            else
+            {
+                if(mDatabaseHelper.CheckData(packet[2]))
+                {
+                    final String nextHop= mDatabaseHelper.getNextHop(packet[2]);
+                    disconnect();
+
+                    final Handler delaydiscover = new Handler();
+                    delaydiscover.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Do something after 5s = 5000ms
+                            discoverPeers();
+                        }
+                    }, 5000);
+
+                    final Handler connect = new Handler();
+                    connect.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                           /* int index=0;
+                            for (int j=0; j<deviceArray.length; j++)
+                            {
+                                if(deviceArray[j].deviceAddress.equals(nextHop))
+                                {
+                                    index=j;
+                                }
+                            }*/
+                            connect(nextHop);
+
+                        }
+                    }, 20000);
+
+                    final Handler relay = new Handler();
+                    relay.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            System.out.println(tempPacket);
+                            sendReceive.write(tempPacket.getBytes());
+                        }
+                    }, 60000);
+                }
             }
         }
         else if(packet[0].equals("2"))
@@ -246,7 +296,6 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(packet[3]);
             String [] entries= packet[3].split("~");
             int no_entries= entries.length;
-            System.out.println("len of entries is: "+ no_entries);
             for(int i=0; i<no_entries; i++)
             {
                 String [] entry= entries[i].split("\\|");
@@ -323,9 +372,17 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getBaseContext(), ContactsPickerActivity.class);
-                System.out.println("Hello");
-                startActivityForResult(intent, REQUEST_CODE_PICK_CONTACTS);
+                if(gatewayAvailable)
+                {
+                    Intent intent = new Intent(getBaseContext(), ContactsPickerActivity.class);
+                    startActivityForResult(intent, REQUEST_CODE_PICK_CONTACTS);
+                }
+
+                else
+                {
+
+                }
+
             }
         });
 
@@ -335,6 +392,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent= new Intent(view.getContext(), Transmission.class);
                 Cursor res= mDatabaseHelper.dataExists(list.getItemAtPosition(position).toString());
                 res.moveToNext();
+                intent.putExtra("destination_address", list.getItemAtPosition(position).toString());
                 intent.putExtra("contact_name", list.getItemAtPosition(position).toString());
                 intent.putExtra("destination_number", res.getString(1));
                 intent.putExtra("isInternal", true);
@@ -688,26 +746,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+
     public void sendRREQ()
     {
-        final Cursor res= mDatabaseHelper.getData();
-
-        while(res.moveToNext())
-        {
-            final String mac= res.getString(0);
-            final String route_req="3;"+getWFDMacAddress().toLowerCase();
-            if(deviceNameArray.contains(mac))
-            {
-
+        final Cursor res= mDatabaseHelper.getDirectlyConnected();
+        res.moveToNext();
+        final Handler handler = new Handler();
+        Runnable runnable= new Runnable() {
+            @Override
+            public void run() {
+                final String mac= res.getString(0);
+                final String route_req="3;"+getWFDMacAddress().toLowerCase();
+                System.out.println("MAC "+ mac);
                 final Handler delaydiscover = new Handler();
                 delaydiscover.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         // Do something after 5s = 5000ms
-                        discoverPeers();
+                        // discoverPeers();
                     }
                 }, 10000);
-
                 final Handler connect = new Handler();
                 connect.postDelayed(new Runnable() {
                     @Override
@@ -716,16 +775,85 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 }, 20000);
-
                 final Handler relay = new Handler();
                 relay.postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        System.out.println(route_req);
                         sendReceive.write(route_req.getBytes());
                     }
-                }, 60000);
+                }, 50000);
+
+                if(res.moveToNext())
+                    handler.postDelayed(this, 120000);
             }
-        }
+        };
+
+        handler.post(runnable);
+
+        /*while(res.moveToNext())
+        {
+            final String mac= res.getString(0);
+            final String route_req="3;"+getWFDMacAddress().toLowerCase();
+            System.out.println("MAC "+ mac);
+            final Handler delaydiscover = new Handler();
+            Runnable runDiscover= new Runnable()
+            {
+                @Override
+                public void run() {
+                    discoverPeers();
+                    handler.postDelayed(this, 5000);
+                }
+            };
+            delaydiscover.post(runDiscover);
+           *//* delaydiscover.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Do something after 5s = 5000ms
+                        // discoverPeers();
+                    }
+                    }, 10000);*//*
+
+            final Handler connect = new Handler();
+            Runnable runConnect= new Runnable()
+            {
+                @Override
+                public void run() {
+                    connect(mac);
+                    handler.postDelayed(this, 20000);
+                }
+            };
+            connect.post(runConnect);
+
+            *//*connect.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        connect(mac);
+
+                    }
+                }, 20000);*//*
+
+            final Handler relay = new Handler();
+            Runnable runSend= new Runnable()
+            {
+                @Override
+                public void run() {
+                    System.out.println(route_req);
+                    //sendReceive.write(route_req.getBytes());
+                    handler.postDelayed(this, 45000);
+                }
+            };
+            relay.post(runSend);
+           *//* relay.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        System.out.println(route_req);
+                        sendReceive.write(route_req.getBytes());
+                    }
+                }, 60000);*//*
+
+
+        }*/
     }
 
 

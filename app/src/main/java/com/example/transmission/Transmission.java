@@ -1,5 +1,6 @@
 package com.example.transmission;
 
+import android.database.Cursor;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
@@ -27,7 +28,7 @@ import java.util.List;
 public class Transmission extends MainActivity {
 
 
-    String nodeAddress;
+    String nodeAddress, nodeDestination;
     Button btnSend;
     EditText messageInput;
     ListView conversationList;
@@ -35,8 +36,11 @@ public class Transmission extends MainActivity {
     serverClass serverClass;
     clientClass clientClass;
     sendReceive sr;
+    DatabaseHelper mDatabaseHelper;
+
 
     ConversationClass conversationClass;
+    private static final String Gateway = "3e:a6:16:eb:70:51";
    /* ArrayAdapter<String> arrayAdapter;*/
 
 
@@ -49,6 +53,7 @@ public class Transmission extends MainActivity {
         messageInput= (EditText)findViewById(R.id.edittext_chatbox);
         conversationList= (ListView) findViewById(R.id.convo_list);
         conversationClass= new ConversationClass();
+        mDatabaseHelper = new DatabaseHelper(this);
         /*arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, inboxArray);*/
     }
 
@@ -67,6 +72,7 @@ public class Transmission extends MainActivity {
         setContentView(R.layout.activity_transmission_module);
         instantiation();
         setTitle(getIntent().getStringExtra("contact_name"));
+        nodeDestination= getIntent().getStringExtra("destination_address");
         nodeAddress=getIntent().getStringExtra("destination_number");
         if(getIntent().getBooleanExtra("isInternal", false))
         {
@@ -75,7 +81,27 @@ public class Transmission extends MainActivity {
 
             }
             else
-                this.connect(getIntent().getIntExtra("position", 0));
+            {
+                long start= System.nanoTime();
+                System.out.println("Start: "+start);
+                this.connect(nodeAddress);
+            }
+
+        }
+        else
+        {
+            if(mSignalStrength<0)
+            {
+
+            }
+            else
+            {
+                String res= mDatabaseHelper.getNextHop(Gateway);
+                this.connect(res);
+                //this.connect(getIntent().getIntExtra("position", 0));
+            }
+
+
         }
 
         EventListener();
@@ -91,8 +117,9 @@ public class Transmission extends MainActivity {
                 //System.out.println("Hello");
                 if(getIntent().getBooleanExtra("isInternal",false))
                 {
-                    String msg="0;"+getWFDMacAddress().toLowerCase()+";"+nodeAddress+";"+messageInput.getText().toString()+";"+ Build.MODEL;
-                    System.out.println(msg);
+                    String msg="0;"+getWFDMacAddress().toLowerCase()+";"+nodeDestination+";"+messageInput.getText().toString()+";"+ Build.MODEL+";"+getWFDMacAddress().toLowerCase();
+                    //System.out.println(msg);
+                    System.out.println("Start time: ");
                     sendReceive.write(msg.getBytes());
                     inboxArray.add(msg);
                 }
@@ -107,7 +134,10 @@ public class Transmission extends MainActivity {
                     else
                     {
                         System.out.println("Helloelse");
-                        String msg="1;"+getWFDMacAddress().toLowerCase()+";"+"0a:23:b2:fc:4a:b4"+";"+nodeAddress+";"+messageInput.getText().toString()+";"+ Build.MODEL;
+                        String msg="1;"+getWFDMacAddress().toLowerCase()+";"+Gateway+";"+nodeAddress+";"+messageInput.getText().toString()+";"+ Build.MODEL+";"+getWFDMacAddress().toLowerCase();
+                        System.out.println("Start time: ");
+                        sendReceive.write(msg.getBytes());
+                        inboxArray.add(msg);
                     }
                 }
 
@@ -116,17 +146,16 @@ public class Transmission extends MainActivity {
     }
 
 
-    private void connect(int position)
+    private void connect(String position)
     {
-        System.out.println("test transmission");
         //final WifiP2pDevice device= deviceArray[position];
-        config.deviceAddress= nodeAddress;
+        config.deviceAddress= position;
         config.groupOwnerIntent=0;
         //status.setText(device.deviceAddress);
         nodeManager.connect(nodeChannel, config, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                Toast.makeText(getApplicationContext(), "Connected to "+ nodeAddress, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Connecting to "+ nodeAddress, Toast.LENGTH_SHORT).show();
             }
 
             @Override

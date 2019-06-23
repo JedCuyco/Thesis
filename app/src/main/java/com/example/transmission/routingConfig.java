@@ -2,8 +2,10 @@ package com.example.transmission;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -41,6 +43,17 @@ public class routingConfig extends AppCompatActivity {
         spinner_next= (Spinner) findViewById(R.id.spinner_nh);
         spinner_stat= (Spinner) findViewById(R.id.spinner_status);
 
+        addNeigbor.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if(getIntent().getBooleanExtra("isEditable", true))
+                {
+                    System.out.println(spinner_next.getSelectedItem().toString());
+                    distress_db.updateNextHop(getIntent().getStringExtra("mac_address"), spinner_next.getSelectedItem().toString());
+                    System.out.println("HELLO");
+                }
+            }
+        });
         Cursor res=distress_db.getData();
 
         while(res.moveToNext())

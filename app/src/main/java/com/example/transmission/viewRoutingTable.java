@@ -26,6 +26,10 @@ public class viewRoutingTable extends AppCompatActivity {
     ArrayAdapter<String> adapter;
     FloatingActionButton fab;
 
+    String tempAddress, tempNextHop, tempName;
+    int tempHopCount, tempBattery, tempSignal;
+    boolean tempStatus;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,24 +58,25 @@ public class viewRoutingTable extends AppCompatActivity {
         routeTable.setOnItemClickListener(new AdapterView.OnItemClickListener(){
 
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 AlertDialog.Builder buildera= new AlertDialog.Builder(viewRoutingTable.this);
                 StringBuilder buffer= new StringBuilder();
+
                 Cursor res= mDatabaseHelper.dataExists(routeTable.getItemAtPosition(position).toString());
                 res.moveToFirst();
-                final String tempAddress= res.getString(0);
-                final String tempNextHop= res.getString(1);
-                final int tempHopCount= res.getInt(2);
-                final boolean tempStatus= res.getInt(3)>0;
-                final String tempName= res.getString(4);
-                final int tempBattery= res.getInt(5);
-                final int tempSignal= res.getInt(6);
+                tempAddress= res.getString(0);
+                tempNextHop= res.getString(1);
+                tempHopCount= res.getInt(2);
+                tempStatus= res.getInt(3)>0;
+                tempName= res.getString(4);
+                tempBattery= res.getInt(5);
+                tempSignal= res.getInt(6);
                 buildera.setNeutralButton("Delete Route", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mDatabaseHelper.deleteName(tempAddress);
-                        macAddressArr.remove(position);
-                        routeInfo.remove(position);
+                        //macAddressArr.remove(position);
+                        //routeInfo.remove(position);
                         adapter.notifyDataSetChanged();
                     }
                 });
