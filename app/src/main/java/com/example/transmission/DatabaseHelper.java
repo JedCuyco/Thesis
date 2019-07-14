@@ -13,6 +13,8 @@ import android.util.Log;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
+    public static DatabaseHelper db_instance;
+
     private static final String TAG = "DatabaseHelper";
 
     public static final String DB_Name= "neighbor.db";
@@ -30,8 +32,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String cl2="mac_addressf";
     public static final String cl3="message";
 
+
     public DatabaseHelper(Context context) {
         super(context, DB_Name, null, 1);
+    }
+
+    public static synchronized DatabaseHelper getInstance(Context context)
+    {
+        if(db_instance==null)
+        {
+            db_instance= new DatabaseHelper(context.getApplicationContext());
+        }
+
+        return db_instance;
     }
 
     @Override
@@ -69,6 +82,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         } else {
             return true;
         }
+    }
+
+    public Cursor getGateways()
+    {
+        int fieldValue=1;
+        SQLiteDatabase db = this.getWritableDatabase();
+        String Query= "Select * from routing_table where status ='" + fieldValue+ "'";
+        Cursor res=  db.rawQuery(Query, null);
+        res.close();
+        return res;
     }
 
 
@@ -130,6 +153,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return res;
     }
 
+    public Cursor getCandidateGateways()
+    {
+        int status=1;
+        SQLiteDatabase db= this.getWritableDatabase();
+        String Query= "Select * from routing_table where status ='" + status+ "'";
+        Cursor res = db.rawQuery(Query, null);
+        return res;
+    }
+
     public  boolean CheckData(String fieldValue)
     {
         Cursor res= dataExists(fieldValue);
@@ -158,11 +190,44 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return res.getString(1);
     }
 
+    public void updateBattery( String fieldValue, int battery)
+    {
+        String TABLE_NAME= "routing_table";
+        String ColumnName="battery_percentage";
+        String Column="mac_address";
+        SQLiteDatabase db=this.getWritableDatabase();
+        String query="UPDATE "+TABLE_NAME +" SET " + ColumnName+ " = '"+battery+"' WHERE "+Column+ " = '"+fieldValue+"'";
+        db.execSQL(query);
+    }
+
+    public void updateSignal( String fieldValue, int status)
+    {
+        String TABLE_NAME= "routing_table";
+        String ColumnName="signal";
+        String Column="mac_address";
+        SQLiteDatabase db=this.getWritableDatabase();
+        String query="UPDATE "+TABLE_NAME +" SET " + ColumnName+ " = '"+status+"' WHERE "+Column+ " = '"+fieldValue+"'";
+        db.execSQL(query);
+    }
+
+    public void updateStatus( String fieldValue, int signal)
+    {
+        String TABLE_NAME= "routing_table";
+        String ColumnName="status";
+        String Column="mac_address";
+        SQLiteDatabase db=this.getWritableDatabase();
+        String query="UPDATE "+TABLE_NAME +" SET " + ColumnName+ " = '"+signal+"' WHERE "+Column+ " = '"+fieldValue+"'";
+        db.execSQL(query);
+    }
+
     public void updateHopCount(String fieldValue, int hopcount)
     {
-        SQLiteDatabase db = this.getWritableDatabase();
-        String query = "update routing_table set hop_count='"+hopcount+"' where mac_address='"+fieldValue+"'";
-        db.execSQL(query);
+        String TABLE_NAME= "routing_table";
+        String ColumnName= "hop_count";
+        String Column="mac_address";
+        SQLiteDatabase db= this.getWritableDatabase();
+        String sql = "UPDATE "+TABLE_NAME +" SET " + ColumnName+ " = '"+hopcount+"' WHERE "+Column+ " = '"+fieldValue+"'";
+        db.execSQL(sql);
     }
 
     public void updateNextHop(String fieldValue, String newNextHop)
@@ -178,7 +243,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(sql);
         //db.update("routing_table", cv, "mac_address= ?", new String[]{fieldValue});
     }
-
 
 
 

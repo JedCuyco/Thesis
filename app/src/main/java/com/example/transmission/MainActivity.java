@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
@@ -23,6 +24,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.NotificationCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.telephony.PhoneStateListener;
@@ -95,13 +97,16 @@ public class MainActivity extends AppCompatActivity {
     private HashMap<String, RouteEntry> entries = new HashMap<String, RouteEntry>();
 
     boolean isBusy= false;
-    boolean gatewayAvailable= true;
+    boolean gatewayAvailable= false;
 
     NotificationCompat.Builder notification;
 
     ConversationClass conversationClass;
 
     boolean ready;
+
+    String gatewayNode="";
+    double priority=100.0;
 
     private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver(){
         @Override
@@ -366,22 +371,85 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private boolean computeMetrics()
+    {
+        boolean result=false;
+        Cursor res= mDatabaseHelper.getCandidateGateways();
+        int hc, batt, sig;
+
+        if(res.getCount()==0)
+            result= false;
+
+        else{
+            while(res.moveToNext())
+            {
+                hc=res.getInt(2);
+                batt=res.getInt(5);
+                sig=Math.abs(res.getInt(6));
+                double tempPriority=(hc*.4)+((100-batt)*.3)+((sig-70)*.3);
+                if(tempPriority<priority)
+                {
+                    priority=tempPriority;
+                    gatewayNode= res.getString(0);
+                    result=true;
+
+                }
+            }
+        }
+        return result;
+
+    }
     private void eventListener()
     {
-
+        final AlertDialog.Builder buildergateway= new AlertDialog.Builder(this);
+        final AlertDialog.Builder buildernotice= new AlertDialog.Builder(this);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(gatewayAvailable)
+                /*if(gatewayAvailable)
                 {
                     Intent intent = new Intent(getBaseContext(), ContactsPickerActivity.class);
                     startActivityForResult(intent, REQUEST_CODE_PICK_CONTACTS);
-                }
+                }*/
 
-                else
-                {
 
-                }
+                    buildergateway.setTitle("Gateway Configuartion");
+                    if(!gatewayAvailable)
+                        buildergateway.setMessage("No available gateway");
+                    else
+                        buildergateway.setMessage("Gateway Node: "+ gatewayNode);
+                    buildergateway.setNeutralButton("Set Gateway", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            gatewayAvailable=computeMetrics();
+                        }
+                    });
+                    buildergateway.setNegativeButton("Reset Gateway", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            gatewayAvailable=false;
+                            gatewayNode="";
+                        }
+                    });
+                    buildergateway.setPositiveButton("Send Message Now", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if(!gatewayAvailable)
+                            {
+                                buildernotice.setTitle("Notice!");
+                                buildernotice.setMessage("No Configured Gateway Node. Configure gateway first");
+                                buildernotice.show();
+                            }
+                            else
+                            {
+                                Intent intent = new Intent(getBaseContext(), ContactsPickerActivity.class);
+                                startActivityForResult(intent, REQUEST_CODE_PICK_CONTACTS);
+                            }
+                        }
+                    });
+                    buildergateway.show();
+
 
             }
         });
@@ -508,7 +576,7 @@ public class MainActivity extends AppCompatActivity {
         nodeFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         nodeFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
-        mDatabaseHelper = new DatabaseHelper(this);
+        mDatabaseHelper = DatabaseHelper.getInstance(this);
 
         notification= new NotificationCompat.Builder(this, "ChannelID01");
         notification.setAutoCancel(true);

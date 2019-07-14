@@ -36,7 +36,7 @@ public class viewRoutingTable extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_routing_table);
         routeTable= (ListView)findViewById(R.id.routing_table);
-        mDatabaseHelper=new DatabaseHelper(this);
+        mDatabaseHelper=DatabaseHelper.getInstance(this);
         fab= findViewById(R.id.fab_route);
         actionListener();
         viewAllEntries();
@@ -60,6 +60,7 @@ public class viewRoutingTable extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 AlertDialog.Builder buildera= new AlertDialog.Builder(viewRoutingTable.this);
+
                 StringBuilder buffer= new StringBuilder();
 
                 Cursor res= mDatabaseHelper.dataExists(routeTable.getItemAtPosition(position).toString());
@@ -127,7 +128,10 @@ public class viewRoutingTable extends AppCompatActivity {
             buffer.append(res.getString(0)+" : ");
             buffer.append(res.getString(1)+" : ");
             buffer.append(res.getInt(2)+" : ");
-            buffer.append(res.getString(3)+"\n");
+            buffer.append(res.getString(3)+" : ");
+            buffer.append(res.getString(4)+" : ");
+            buffer.append(res.getInt(5)+" : ");
+            buffer.append(res.getInt(6)+"\n");
             routeInfo.add(buffer.toString());
             buffer.setLength(0);
         }

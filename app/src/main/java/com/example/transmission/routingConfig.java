@@ -32,7 +32,7 @@ public class routingConfig extends AppCompatActivity {
 
     public void instantiation()
     {
-        distress_db= new DatabaseHelper(this);
+        distress_db= DatabaseHelper.getInstance(this);
 
         in_address= (EditText) findViewById(R.id.input_address);
         in_name=(EditText) findViewById(R.id.input_deviceName);
@@ -50,6 +50,10 @@ public class routingConfig extends AppCompatActivity {
                 {
                     System.out.println(spinner_next.getSelectedItem().toString());
                     distress_db.updateNextHop(getIntent().getStringExtra("mac_address"), spinner_next.getSelectedItem().toString());
+                    distress_db.updateHopCount(getIntent().getStringExtra("mac_address"), Integer.parseInt(in_count.getText().toString()));
+                    distress_db.updateBattery(getIntent().getStringExtra("mac_address"), Integer.parseInt(in_battery.getText().toString()));
+                    distress_db.updateSignal(getIntent().getStringExtra("mac_address"), Integer.parseInt(in_signal.getText().toString()));
+                    distress_db.updateStatus(getIntent().getStringExtra("mac_address"), spinner_stat.getSelectedItemPosition());
                     System.out.println("HELLO");
                 }
             }
@@ -61,8 +65,8 @@ public class routingConfig extends AppCompatActivity {
             db_macs.add(res.getString(0));
         }
 
-        status.add("True");
         status.add("False");
+        status.add("True");
 
         ArrayAdapter<String> spinnerAdapter= new ArrayAdapter<String>(this, R.layout.spinner_item, db_macs);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);

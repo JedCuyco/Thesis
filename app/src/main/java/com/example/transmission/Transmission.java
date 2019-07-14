@@ -53,7 +53,7 @@ public class Transmission extends MainActivity {
         messageInput= (EditText)findViewById(R.id.edittext_chatbox);
         conversationList= (ListView) findViewById(R.id.convo_list);
         conversationClass= new ConversationClass();
-        mDatabaseHelper = new DatabaseHelper(this);
+        mDatabaseHelper = DatabaseHelper.getInstance(this);
         /*arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, inboxArray);*/
     }
 
@@ -125,7 +125,7 @@ public class Transmission extends MainActivity {
                 }
                 else
                 {
-                    if(mSignalStrength<0)
+                    if(mSignalStrength>-90)
                     {
                         String phoneNum = conversationClass.reformatNumber(getIntent().getStringExtra("destination_number"));
                         conversationClass.sendSMS(phoneNum, messageInput.getText().toString());
