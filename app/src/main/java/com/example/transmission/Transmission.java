@@ -96,7 +96,7 @@ public class Transmission extends MainActivity {
             }
             else
             {
-                String res= mDatabaseHelper.getNextHop(Gateway);
+                String res= mDatabaseHelper.getNextHop(gatewayNode);
                 this.connect(res);
                 //this.connect(getIntent().getIntExtra("position", 0));
             }
@@ -134,7 +134,7 @@ public class Transmission extends MainActivity {
                     else
                     {
                         System.out.println("Helloelse");
-                        String msg="1;"+getWFDMacAddress().toLowerCase()+";"+Gateway+";"+nodeAddress+";"+messageInput.getText().toString()+";"+ Build.MODEL+";"+getWFDMacAddress().toLowerCase();
+                        String msg="1;"+getWFDMacAddress().toLowerCase()+";"+gatewayNode+";"+nodeAddress+";"+messageInput.getText().toString()+";"+ Build.MODEL+";"+getWFDMacAddress().toLowerCase();
                         System.out.println("Start time: ");
                         sendReceive.write(msg.getBytes());
                         inboxArray.add(msg);

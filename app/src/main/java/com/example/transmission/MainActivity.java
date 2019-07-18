@@ -245,11 +245,20 @@ public class MainActivity extends AppCompatActivity {
         else if(packet[0].equals("1"))
         {
             System.out.println("Sent");
-            if(packet[2].equals(getWFDMacAddress().toLowerCase())&& mSignalStrength<0)
+            if(packet[2].equals(getWFDMacAddress().toLowerCase()))
             {
-                disconnect();
-                String phonenum= conversationClass.reformatNumber(packet[3]);
-                conversationClass.sendSMS(phonenum, packet[4]);
+
+                if(mSignalStrength<0)
+                {
+                    disconnect();
+                    String phonenum= conversationClass.reformatNumber(packet[3]);
+                    conversationClass.sendSMS(phonenum, packet[4]);
+                }
+
+                else
+                {
+
+                }
 
             }
             else
@@ -310,6 +319,15 @@ public class MainActivity extends AppCompatActivity {
                     {
                         mDatabaseHelper.updateHopCount(entry[0],Integer.parseInt(entry[2]+1));
                         mDatabaseHelper.updateNextHop(entry[0], entry[1]);
+                        mDatabaseHelper.updateStatus(entry[0], Integer.parseInt(entry[3]));
+                        mDatabaseHelper.updateBattery(entry[0], Integer.parseInt(entry[5]));
+                        mDatabaseHelper.updateSignal(entry[0], Integer.parseInt(entry[6]));
+                    }
+                    else if(Integer.parseInt(entry[2])==0)
+                    {
+                        mDatabaseHelper.updateStatus(entry[0], Integer.parseInt(entry[3]));
+                        mDatabaseHelper.updateBattery(entry[0], Integer.parseInt(entry[5]));
+                        mDatabaseHelper.updateSignal(entry[0], Integer.parseInt(entry[6]));
                     }
 
                 }
@@ -320,22 +338,38 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             }
+            disconnect();
         }
         else if(packet[0].equals("3"))
         {
             Cursor res= mDatabaseHelper.getData();
             StringBuffer buffer= new StringBuffer();
+
+
+            buffer.append(getWFDMacAddress().toLowerCase()+"|");
+            buffer.append(getWFDMacAddress().toLowerCase()+"|");
+            buffer.append("0"+"|");
+            if(mSignalStrength>0)
+                buffer.append("0"+"|");
+            else
+                buffer.append("1"+"|");
+            buffer.append(Build.MODEL+"|");
+            buffer.append(battery+"|");
+            buffer.append(mSignalStrength+"~");
             while(res.moveToNext())
             {
                 buffer.append(res.getString(0)+"|");
                 buffer.append(getWFDMacAddress().toLowerCase()+"|");
                 buffer.append(res.getInt(2)+"|");
-                buffer.append(res.getString(3)+"~");
+                buffer.append(res.getString(3)+"|");
+                buffer.append(res.getString(4)+"|");
+                buffer.append(res.getInt(5)+"|");
+                buffer.append(res.getInt(6)+"~");
             }
             String msg1="2;"+getWFDMacAddress().toLowerCase()+";"+res.getCount()+";"+buffer.toString();
             System.out.println(buffer.toString());
             sendReceive.write(msg1.getBytes());
-            disconnect();
+            //disconnect();
         }
         else if(packet[0].equals("4"))
         {
