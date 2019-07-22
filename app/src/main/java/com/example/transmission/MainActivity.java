@@ -315,7 +315,11 @@ public class MainActivity extends AppCompatActivity {
                 String [] entry= entries[i].split("\\|");
                 if(mDatabaseHelper.CheckData(entry[0]))
                 {
-                    if(mDatabaseHelper.getHopCount(entry[0])>Integer.parseInt(entry[2])+1)
+                    if(entry[0].equals(getWFDMacAddress().toLowerCase()))
+                    {
+                        //do nothing since self
+                    }
+                    else if(mDatabaseHelper.getHopCount(entry[0])>Integer.parseInt(entry[2])+1)
                     {
                         mDatabaseHelper.updateHopCount(entry[0],Integer.parseInt(entry[2]+1));
                         mDatabaseHelper.updateNextHop(entry[0], entry[1]);
@@ -323,18 +327,27 @@ public class MainActivity extends AppCompatActivity {
                         mDatabaseHelper.updateBattery(entry[0], Integer.parseInt(entry[5]));
                         mDatabaseHelper.updateSignal(entry[0], Integer.parseInt(entry[6]));
                     }
-                    else if(Integer.parseInt(entry[2])==0)
+                    else if(Integer.parseInt(entry[2])==1)
                     {
                         mDatabaseHelper.updateStatus(entry[0], Integer.parseInt(entry[3]));
                         mDatabaseHelper.updateBattery(entry[0], Integer.parseInt(entry[5]));
                         mDatabaseHelper.updateSignal(entry[0], Integer.parseInt(entry[6]));
+                        System.out.println("EHEM");
                     }
 
                 }
                 else
                 {
                     //add()
-                    mDatabaseHelper.addData(entry[0], entry[1],Integer.parseInt(entry[2])+1, false, Build.MODEL, 0, 0);
+                    if(entry[0].equals(getWFDMacAddress().toLowerCase()))
+                    {
+                        //do nothing since self
+                    }
+                    else
+                    {
+                        mDatabaseHelper.addData(entry[0], entry[1],Integer.parseInt(entry[2])+1, false, Build.MODEL, 0, 0);
+                    }
+
                 }
 
             }
@@ -348,8 +361,8 @@ public class MainActivity extends AppCompatActivity {
 
             buffer.append(getWFDMacAddress().toLowerCase()+"|");
             buffer.append(getWFDMacAddress().toLowerCase()+"|");
-            buffer.append("0"+"|");
-            if(mSignalStrength>0)
+            buffer.append("1"+"|");
+            if(mSignalStrength>=0)
                 buffer.append("0"+"|");
             else
                 buffer.append("1"+"|");
@@ -427,10 +440,12 @@ public class MainActivity extends AppCompatActivity {
                     priority=tempPriority;
                     gatewayNode= res.getString(0);
                     result=true;
+                    System.out.println("EHEM"+ priority);
 
                 }
             }
         }
+        System.out.println(gatewayNode);
         return result;
 
     }
@@ -471,8 +486,9 @@ public class MainActivity extends AppCompatActivity {
                         public void onClick(DialogInterface dialog, int which) {
                             if(!gatewayAvailable)
                             {
+                                sendRREQ();
                                 buildernotice.setTitle("Notice!");
-                                buildernotice.setMessage("No Configured Gateway Node. Configure gateway first");
+                                buildernotice.setMessage("No Configured Gateway Node. Requesting Route..");
                                 buildernotice.show();
                             }
                             else
@@ -852,6 +868,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendRREQ()
     {
+        ready=false;
         final Cursor res= mDatabaseHelper.getDirectlyConnected();
         res.moveToNext();
         final Handler handler = new Handler();
@@ -861,6 +878,7 @@ public class MainActivity extends AppCompatActivity {
                 final String mac= res.getString(0);
                 final String route_req="3;"+getWFDMacAddress().toLowerCase();
                 System.out.println("MAC "+ mac);
+                disconnect();
                 final Handler delaydiscover = new Handler();
                 delaydiscover.postDelayed(new Runnable() {
                     @Override
@@ -883,79 +901,25 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         System.out.println(route_req);
                         sendReceive.write(route_req.getBytes());
+
+                        if(ready)
+                            gatewayAvailable=computeMetrics();
                     }
                 }, 50000);
 
                 if(res.moveToNext())
                     handler.postDelayed(this, 120000);
+
+                else
+                    ready=true;
+
+
             }
         };
 
         handler.post(runnable);
 
-        /*while(res.moveToNext())
-        {
-            final String mac= res.getString(0);
-            final String route_req="3;"+getWFDMacAddress().toLowerCase();
-            System.out.println("MAC "+ mac);
-            final Handler delaydiscover = new Handler();
-            Runnable runDiscover= new Runnable()
-            {
-                @Override
-                public void run() {
-                    discoverPeers();
-                    handler.postDelayed(this, 5000);
-                }
-            };
-            delaydiscover.post(runDiscover);
-           *//* delaydiscover.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Do something after 5s = 5000ms
-                        // discoverPeers();
-                    }
-                    }, 10000);*//*
 
-            final Handler connect = new Handler();
-            Runnable runConnect= new Runnable()
-            {
-                @Override
-                public void run() {
-                    connect(mac);
-                    handler.postDelayed(this, 20000);
-                }
-            };
-            connect.post(runConnect);
-
-            *//*connect.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        connect(mac);
-
-                    }
-                }, 20000);*//*
-
-            final Handler relay = new Handler();
-            Runnable runSend= new Runnable()
-            {
-                @Override
-                public void run() {
-                    System.out.println(route_req);
-                    //sendReceive.write(route_req.getBytes());
-                    handler.postDelayed(this, 45000);
-                }
-            };
-            relay.post(runSend);
-           *//* relay.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        System.out.println(route_req);
-                        sendReceive.write(route_req.getBytes());
-                    }
-                }, 60000);*//*
-
-
-        }*/
     }
 
 
@@ -1061,6 +1025,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "Phone number found: " + formatted, Toast.LENGTH_SHORT).show();
                     //edit this part
                     Intent intent = new Intent(this, Transmission.class);
+                    intent.putExtra("destination_address", gatewayNode);
                     intent.putExtra("contact_name", (String) data.getExtras().get(ContactsPickerActivity.KEY_CONTACT_NAME));
                     intent.putExtra("destination_number", formatted);
                     intent.putExtra("isExternal", false);

@@ -40,7 +40,7 @@ public class Transmission extends MainActivity {
 
 
     ConversationClass conversationClass;
-    private static final String Gateway = "3e:a6:16:eb:70:51";
+    private static final String Gateway = "";
    /* ArrayAdapter<String> arrayAdapter;*/
 
 
@@ -96,7 +96,7 @@ public class Transmission extends MainActivity {
             }
             else
             {
-                String res= mDatabaseHelper.getNextHop(gatewayNode);
+                String res= mDatabaseHelper.getNextHop(nodeDestination);
                 this.connect(res);
                 //this.connect(getIntent().getIntExtra("position", 0));
             }
@@ -117,15 +117,23 @@ public class Transmission extends MainActivity {
                 //System.out.println("Hello");
                 if(getIntent().getBooleanExtra("isInternal",false))
                 {
-                    String msg="0;"+getWFDMacAddress().toLowerCase()+";"+nodeDestination+";"+messageInput.getText().toString()+";"+ Build.MODEL+";"+getWFDMacAddress().toLowerCase();
+                    String msg="";
+                    boolean flag=false;
+                    if(!flag)
+                    {
+                        msg="0;"+getWFDMacAddress().toLowerCase()+";"+nodeDestination+";"+messageInput.getText().toString()+";"+ Build.MODEL+";"+getWFDMacAddress().toLowerCase();
+                        flag=true;
+                    }
+
                     //System.out.println(msg);
                     System.out.println("Start time: ");
-                    sendReceive.write(msg.getBytes());
+                    if(flag)
+                        sendReceive.write(msg.getBytes());
                     inboxArray.add(msg);
                 }
                 else
                 {
-                    if(mSignalStrength>-90)
+                    if(mSignalStrength>-80)
                     {
                         String phoneNum = conversationClass.reformatNumber(getIntent().getStringExtra("destination_number"));
                         conversationClass.sendSMS(phoneNum, messageInput.getText().toString());
@@ -134,7 +142,7 @@ public class Transmission extends MainActivity {
                     else
                     {
                         System.out.println("Helloelse");
-                        String msg="1;"+getWFDMacAddress().toLowerCase()+";"+gatewayNode+";"+nodeAddress+";"+messageInput.getText().toString()+";"+ Build.MODEL+";"+getWFDMacAddress().toLowerCase();
+                        String msg="1;"+getWFDMacAddress().toLowerCase()+";"+nodeDestination+";"+nodeAddress+";"+messageInput.getText().toString()+";"+ Build.MODEL+";"+getWFDMacAddress().toLowerCase();
                         System.out.println("Start time: ");
                         sendReceive.write(msg.getBytes());
                         inboxArray.add(msg);

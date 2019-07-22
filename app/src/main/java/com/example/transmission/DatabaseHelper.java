@@ -141,6 +141,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db= this.getWritableDatabase();
         String Query= "Select * from routing_table where mac_address ='" + fieldValue+ "'";
         Cursor res = db.rawQuery(Query, null);
+
         return res;
     }
 
@@ -167,10 +168,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor res= dataExists(fieldValue);
         if(res.getCount()==0)
         {
+            res.close();
             return false;
         }
         else
+        {
+            res.close();
             return true;
+        }
+
         //return false;
     }
 
@@ -184,10 +190,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public String getNextHop(String fieldValue)
     {
+        String returnStirng;
         Cursor res= dataExists(fieldValue);
         res.moveToNext();
-
-        return res.getString(1);
+        returnStirng=res.getString(1);
+        return returnStirng;
     }
 
     public void updateBattery( String fieldValue, int battery)

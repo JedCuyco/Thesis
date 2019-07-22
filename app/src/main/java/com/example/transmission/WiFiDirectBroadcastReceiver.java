@@ -39,7 +39,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
             }
         }else if(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action))
         {
-            System.out.println("PEERS CHANGED");
+            //System.out.println("PEERS CHANGED");
 
             if (nodeManager!=null)
             {
