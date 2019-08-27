@@ -1,5 +1,7 @@
 package com.example.transmission;
 
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pInfo;
@@ -7,6 +9,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
@@ -37,6 +40,9 @@ public class Transmission extends MainActivity {
     clientClass clientClass;
     sendReceive sr;
     DatabaseHelper mDatabaseHelper;
+    String mPhoneNumber;
+    int signal;
+
 
 
     ConversationClass conversationClass;
@@ -54,6 +60,9 @@ public class Transmission extends MainActivity {
         conversationList= (ListView) findViewById(R.id.convo_list);
         conversationClass= new ConversationClass();
         mDatabaseHelper = DatabaseHelper.getInstance(this);
+        mSignalStrength=mSignalStrength;
+        /*TelephonyManager tMgr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+        mPhoneNumber = tMgr.getLine1Number();*/
         /*arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, inboxArray);*/
     }
 
@@ -74,6 +83,7 @@ public class Transmission extends MainActivity {
         setTitle(getIntent().getStringExtra("contact_name"));
         nodeDestination= getIntent().getStringExtra("destination_address");
         nodeAddress=getIntent().getStringExtra("destination_number");
+        signal=getIntent().getIntExtra("mSignal", 0);
         if(getIntent().getBooleanExtra("isInternal", false))
         {
             if(getIntent().getStringExtra("contact_name").isEmpty())
@@ -90,7 +100,7 @@ public class Transmission extends MainActivity {
         }
         else
         {
-            if(mSignalStrength<0)
+            if(signal<0)
             {
 
             }
@@ -133,10 +143,11 @@ public class Transmission extends MainActivity {
                 }
                 else
                 {
-                    if(mSignalStrength>-80)
+                    if(mSignalStrength>-90)
                     {
                         String phoneNum = conversationClass.reformatNumber(getIntent().getStringExtra("destination_number"));
-                        conversationClass.sendSMS(phoneNum, messageInput.getText().toString());
+                        String eMessage= "(GLOBAL DISTRESS MESSAGE) \n"+ "Message from: "+getWFDMacAddress().toLowerCase()+"\n"+"Message: "+messageInput.getText().toString();
+                        conversationClass.sendSMS(phoneNum, eMessage);
                         inboxArray.add(messageInput.getText().toString());
                     }
                     else
@@ -169,6 +180,11 @@ public class Transmission extends MainActivity {
             @Override
             public void onFailure(int reason) {
                 Toast.makeText(getApplicationContext(), "Not connected", Toast.LENGTH_SHORT).show();
+                System.out.println("Fail");;
+                Intent intent= new Intent();
+                intent.putExtra("resultValue", true);
+                setResult(RESULT_OK, intent);
+                finish();
             }
         });
     }

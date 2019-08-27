@@ -257,7 +257,10 @@ public class MainActivity extends AppCompatActivity {
 
                 else
                 {
-
+                    String msg="5;"+getWFDMacAddress().toLowerCase()+";"+packet[1];//+";"+nodeAddress+";"+messageInput.getText().toString()+";"+ Build.MODEL+";"+getWFDMacAddress().toLowerCase();
+                    System.out.println(msg);
+                    //sendReceive.write(tempPacket.getBytes());
+                    sendReceive.write(msg.getBytes());
                 }
 
             }
@@ -298,8 +301,12 @@ public class MainActivity extends AppCompatActivity {
                     relay.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            System.out.println(tempPacket);
-                            sendReceive.write(tempPacket.getBytes());
+                            //String msg="1;"+getWFDMacAddress().toLowerCase()+";"+nodeDestination+";"+nodeAddress+";"+messageInput.getText().toString()+";"+ Build.MODEL+";"+getWFDMacAddress().toLowerCase();
+                            String textBack= packet[0]+";"+packet[1]+";"+packet[2]+";"+packet[3]+";"+packet[4]+";"+packet[5]+";"+getWFDMacAddress().toLowerCase();
+                            //System.out.println(tempPacket);
+                            System.out.println(textBack);
+                            //sendReceive.write(tempPacket.getBytes());
+                            sendReceive.write(textBack.getBytes());
                         }
                     }, 60000);
                 }
@@ -393,6 +400,12 @@ public class MainActivity extends AppCompatActivity {
                 entries.get(packet[1]).setPhoneSignal(Integer.parseInt(packet[3]));
             }
         }
+        else if(packet[0].equals("5"))
+        {
+            disconnect();
+            mDatabaseHelper.updateStatus(packet[1], 0);
+            sendRREQ();
+        }
 
     }
 
@@ -484,12 +497,20 @@ public class MainActivity extends AppCompatActivity {
                     buildergateway.setPositiveButton("Send Message Now", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            if(!gatewayAvailable)
-                            {
-                                sendRREQ();
-                                buildernotice.setTitle("Notice!");
-                                buildernotice.setMessage("No Configured Gateway Node. Requesting Route..");
-                                buildernotice.show();
+                            if(!gatewayAvailable) {
+                                if(mSignalStrength<0)
+                                {
+                                    Intent intent = new Intent(getBaseContext(), ContactsPickerActivity.class);
+                                    startActivityForResult(intent, REQUEST_CODE_PICK_CONTACTS);
+                                }
+                                else
+                                {
+                                    sendRREQ();
+                                    buildernotice.setTitle("Notice!");
+                                    buildernotice.setMessage("No Configured Gateway Node. Requesting Route..");
+                                    buildernotice.show();
+                                }
+
                             }
                             else
                             {
@@ -869,6 +890,7 @@ public class MainActivity extends AppCompatActivity {
     public void sendRREQ()
     {
         ready=false;
+        final AlertDialog.Builder buildernotice= new AlertDialog.Builder(this);
         final Cursor res= mDatabaseHelper.getDirectlyConnected();
         res.moveToNext();
         final Handler handler = new Handler();
@@ -903,7 +925,14 @@ public class MainActivity extends AppCompatActivity {
                         sendReceive.write(route_req.getBytes());
 
                         if(ready)
+                        {
+                            System.out.println("YES");
                             gatewayAvailable=computeMetrics();
+                            buildernotice.setTitle("Route Configured!");
+                            buildernotice.setMessage("You can now send external message through "+ gatewayNode);
+                            buildernotice.show();
+                        }
+
                     }
                 }, 50000);
 
@@ -1025,12 +1054,18 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "Phone number found: " + formatted, Toast.LENGTH_SHORT).show();
                     //edit this part
                     Intent intent = new Intent(this, Transmission.class);
+                    intent.putExtra("mSignal", mSignalStrength);
                     intent.putExtra("destination_address", gatewayNode);
                     intent.putExtra("contact_name", (String) data.getExtras().get(ContactsPickerActivity.KEY_CONTACT_NAME));
                     intent.putExtra("destination_number", formatted);
                     intent.putExtra("isExternal", false);
-                    startActivity(intent);
+                    startActivityForResult(intent, 1);
                 }
+            case 1:
+                if(resultCode == RESULT_OK) {
+                    sendRREQ();
+                }
+
         }
     }
 
@@ -1063,5 +1098,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return null;
     }
+
 
 }
